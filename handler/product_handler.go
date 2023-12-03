@@ -4,14 +4,15 @@ import (
 	"net/http"
 
 	"github.com/cleanarchitect/pos/domain"
+	"github.com/cleanarchitect/pos/usecase"
 	"github.com/gin-gonic/gin"
 )
 
 type ProductHandler struct {
-	productUseCase domain.ProductUseCase
+	productUseCase usecase.ProductRepositoryInPort
 }
 
-func NewProductHandler(productUseCase domain.ProductUseCase) *ProductHandler {
+func NewProductHandler(productUseCase usecase.ProductRepositoryInPort) *ProductHandler {
 	return &ProductHandler{
 		productUseCase: productUseCase,
 	}
