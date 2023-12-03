@@ -88,3 +88,23 @@ func (r *ProductRepositoryImpl) DeleteProduct(id string) error {
 
 	return nil
 }
+
+func (r *ProductRepositoryImpl) GetProductsResponse(data []*domain.Product, err error) ([]*domain.Product, error) {
+	return data, err
+}
+
+func (r *ProductRepositoryImpl) GetProductByIDResponse(data *domain.Product, err error) (*domain.Product, error) {
+	return data, err
+}
+
+func (r *ProductRepositoryImpl) CreateProductResponse(data *domain.Product, err error) (*domain.Product, error) {
+	return data, err
+}
+
+func (r *ProductRepositoryImpl) UpdateProductResponse(data *domain.Product, err error) (*domain.Product, error) {
+	return data, err
+}
+
+func (r *ProductRepositoryImpl) DeleteProductResponse(err error) error {
+	return err
+}

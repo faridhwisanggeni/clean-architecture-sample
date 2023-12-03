@@ -28,7 +28,9 @@ func main() {
 
 	// Initialize dependencies
 	productRepository := infrastructure.NewProductRepository(db) // Implement your repository
-	productUseCase := usecase.NewProductUseCase(productRepository)
+	productRepositoryInPort := usecase.ProductRepositoryInPort(productRepository)
+	productRepositoryOutPort := usecase.ProductRepositoryOutPort(productRepository)
+	productUseCase := usecase.NewProductUseCase(productRepositoryInPort, productRepositoryOutPort)
 	productHandler := handler.NewProductHandler(productUseCase)
 
 	// Set up HTTP server
