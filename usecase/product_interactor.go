@@ -1,42 +1,63 @@
 package usecase
 
 import (
+	"fmt"
+
 	"github.com/cleanarchitect/pos/domain"
 )
 
-type ProductInteractor struct {
-	productRepository ProductRepositoryInPort
+type ProductUseCaseImpl struct {
+	productRepositoryIn  ProductRepositoryInPort
+	productRepositoryOut ProductRepositoryOutPort
 }
 
-func NewProductInteractor(productRepository ProductRepositoryInPort) *ProductInteractor {
-	return &ProductInteractor{
-		productRepository: productRepository,
+func NewProductUseCase(productRepositoryIn ProductRepositoryInPort, productRepositoryOut ProductRepositoryOutPort) *ProductUseCaseImpl {
+	return &ProductUseCaseImpl{
+		productRepositoryIn:  productRepositoryIn,
+		productRepositoryOut: productRepositoryOut,
 	}
 }
 
-// Implement the CRUD methods contract
-
-// GetProducts retrieves all products
-func (s *ProductInteractor) GetProducts() ([]*domain.Product, error) {
-	return s.productRepository.GetProducts()
+func (uc *ProductUseCaseImpl) GetProducts() ([]*domain.Product, error) {
+	return uc.productRepositoryOut.GetProductsResponse(uc.productRepositoryIn.GetProducts())
 }
 
-// GetProductByID retrieves a product by ID
-func (s *ProductInteractor) GetProductByID(id string) (*domain.Product, error) {
-	return s.productRepository.GetProductByID(id)
+func (uc *ProductUseCaseImpl) GetProductByID(id string) (*domain.Product, error) {
+	return uc.productRepositoryOut.GetProductByIDResponse(uc.productRepositoryIn.GetProductByID(id))
 }
 
-// CreateProduct inserts a new product into the database
-func (s *ProductInteractor) CreateProduct(product *domain.Product) (*domain.Product, error) {
-	return s.productRepository.CreateProduct(product)
+func (uc *ProductUseCaseImpl) CreateProduct(product *domain.Product) (*domain.Product, error) {
+	if product.Price > 200 {
+		var product = &domain.Product{}
+		return uc.productRepositoryOut.CreateProductResponse(product, fmt.Errorf("Nilai price kemahalan"))
+	}
+	return uc.productRepositoryOut.CreateProductResponse(uc.productRepositoryIn.CreateProduct(product))
 }
 
-// UpdateProduct updates a product in the database
-func (s *ProductInteractor) UpdateProduct(id string, name string, price float64) (*domain.Product, error) {
-	return s.productRepository.UpdateProduct(id, name, price)
+func (uc *ProductUseCaseImpl) UpdateProduct(id string, name string, price float64) (*domain.Product, error) {
+	return uc.productRepositoryOut.UpdateProductResponse(uc.productRepositoryIn.UpdateProduct(id, name, price))
 }
 
-// DeleteProduct deletes a product from the database
-func (s *ProductInteractor) DeleteProduct(id string) error {
-	return s.productRepository.DeleteProduct(id)
+func (uc *ProductUseCaseImpl) DeleteProduct(id string) error {
+	return uc.productRepositoryOut.DeleteProductResponse(uc.productRepositoryIn.DeleteProduct(id))
+}
+
+func (uc *ProductUseCaseImpl) GetProductsResponse() ([]*domain.Product, error) {
+	return uc.productRepositoryOut.GetProductsResponse(uc.productRepositoryIn.GetProducts())
+}
+
+func (uc *ProductUseCaseImpl) GetProductByIDResponse(id string) (*domain.Product, error) {
+	return uc.productRepositoryOut.GetProductByIDResponse(uc.productRepositoryIn.GetProductByID(id))
+}
+
+func (uc *ProductUseCaseImpl) CreateProductResponse(product *domain.Product) (*domain.Product, error) {
+	return uc.productRepositoryOut.CreateProductResponse(uc.productRepositoryIn.CreateProduct(product))
+}
+
+func (uc *ProductUseCaseImpl) UpdateProductResponse(id string, name string, price float64) (*domain.Product, error) {
+	return uc.productRepositoryOut.UpdateProductResponse(uc.productRepositoryIn.UpdateProduct(id, name, price))
+}
+
+func (uc *ProductUseCaseImpl) DeleteProductResponse(id string) error {
+	return uc.productRepositoryOut.DeleteProductResponse(uc.productRepositoryIn.DeleteProduct(id))
 }
