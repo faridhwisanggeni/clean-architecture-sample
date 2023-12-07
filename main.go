@@ -17,23 +17,32 @@ import (
 )
 
 func main() {
-	// dsn := "user=g2dev01 password=g2dev01password dbname=g2_database sslmode=disable"
-	dbConfig := "postgresql://g2dev01:g2dev01password@localhost:54320/g2_database"
+	dbConfig := "postgresql://postgres:0oKmnJi9@localhost:5432/postgres"
 	db, err := pgx.Connect(context.Background(), dbConfig)
 	if err != nil {
-		fmt.Println("Error connecting to PostgreSQL:", err)
-		return
+		fmt.Println("error connecting db postgre: ", err)
 	}
+
 	defer db.Close(context.Background())
 
-	// Initialize dependencies
-	productRepository := infrastructure.NewProductRepository(db) // Implement your repository
+	//Initialize dependencies
+	productRepository := infrastructure.NewProductRepository(db)
+	transactionRepository := infrastructure.NewTransactionRepository(db)
+	transactionDetailRepository := infrastructure.NewTransactionDetailRepository(db)
+	transactionRepoInPort := usecase.TransactionRepositoryInPort(transactionRepository)
+	transactionRepoOutPort := usecase.TransactionRepositoryOutPort(transactionRepository)
+	transactionDetailRepoInPort := usecase.TransactionDetailRepositoryInPort(transactionDetailRepository)
+	transactionDetailRepoOutPort := usecase.TransactionDetailRepositoryOutPort(transactionDetailRepository)
 	productRepositoryInPort := usecase.ProductRepositoryInPort(productRepository)
 	productRepositoryOutPort := usecase.ProductRepositoryOutPort(productRepository)
 	productUseCase := usecase.NewProductUseCase(productRepositoryInPort, productRepositoryOutPort)
 	productHandler := handler.NewProductHandler(productUseCase)
+	transactionUseCase := usecase.NewTransactionUseCase(transactionRepoInPort, transactionRepoOutPort)
+	transactionHandler := handler.NewTransactionHandler(transactionUseCase)
+	transactionDetailUseCase := usecase.NewTransactionDetailUseCase(transactionDetailRepoInPort, transactionDetailRepoOutPort)
+	transactionDetailHandler := handler.NewTransactionDetailHandler(transactionDetailUseCase)
 
-	// Set up HTTP server
+	//set up HTTP server
 	router := gin.Default()
 	api := router.Group("/api")
 	{
@@ -42,14 +51,20 @@ func main() {
 		api.POST("/products", productHandler.CreateProduct)
 		api.PUT("/products/:id", productHandler.UpdateProduct)
 		api.DELETE("/products/:id", productHandler.DeleteProduct)
+		api.GET("/order", transactionHandler.GetTransaction)
+		api.GET("/order/:id", transactionHandler.GetTransactionByID)
+		api.POST("/order", transactionHandler.CreateTransaction)
+		api.GET("/order-detail", transactionDetailHandler.GetTransactionDetail)
+		api.GET("/order-detail/:id", transactionDetailHandler.GetTransactionDetailByTrxID)
+		api.POST("/order-detail", transactionDetailHandler.CreateTransactionDetail)
 	}
 
 	server := &http.Server{
-		Addr:    ":8083", // Change this to your desired port
+		Addr:    ":8003",
 		Handler: router,
 	}
 
-	gin.SetMode(gin.ReleaseMode)
+	//gin.SetMode(gin.ReleaseMode)
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -70,7 +85,7 @@ func gracefulShutdown(server *http.Server) {
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		fmt.Printf("Error shutting down: %v\n", err)
+		fmt.Printf("Error shuting down: %v", err)
 	}
 	os.Exit(0)
 }
