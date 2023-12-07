@@ -17,23 +17,28 @@ import (
 )
 
 func main() {
-	// dsn := "user=g2dev01 password=g2dev01password dbname=g2_database sslmode=disable"
-	dbConfig := "postgresql://g2dev01:g2dev01password@localhost:54320/g2_database"
+	dbConfig := "postgresql://postgres:1qAzxSw2@localhost:5432/golang"
 	db, err := pgx.Connect(context.Background(), dbConfig)
 	if err != nil {
-		fmt.Println("Error connecting to PostgreSQL:", err)
+		fmt.Println("Error connectng to Postgre:", err)
 		return
 	}
 	defer db.Close(context.Background())
 
-	// Initialize dependencies
-	productRepository := infrastructure.NewProductRepository(db) // Implement your repository
+	//initialize dependecies
+	productRepository := infrastructure.NewProductRepository(db) //Implement your repository
 	productRepositoryInPort := usecase.ProductRepositoryInPort(productRepository)
 	productRepositoryOutPort := usecase.ProductRepositoryOutPort(productRepository)
 	productUseCase := usecase.NewProductUseCase(productRepositoryInPort, productRepositoryOutPort)
 	productHandler := handler.NewProductHandler(productUseCase)
 
-	// Set up HTTP server
+	transactionRepository := infrastructure.NewTransactionRepository(db) //Implement your repository
+	transactionRepositoryInPort := usecase.TransactionRepositoryInPort(transactionRepository)
+	transactionRepositoryOutPort := usecase.TransactionRepositoryOutPort(transactionRepository)
+	transactionUseCase := usecase.NewTransactionUseCase(transactionRepositoryInPort, transactionRepositoryOutPort, productRepositoryInPort, productRepositoryOutPort)
+	transactionHandler := handler.NewTransactionHandler(transactionUseCase)
+
+	//set up HTTP Server
 	router := gin.Default()
 	api := router.Group("/api")
 	{
@@ -42,14 +47,15 @@ func main() {
 		api.POST("/products", productHandler.CreateProduct)
 		api.PUT("/products/:id", productHandler.UpdateProduct)
 		api.DELETE("/products/:id", productHandler.DeleteProduct)
+		api.POST("/transaction", transactionHandler.CreateTransaction)
 	}
 
 	server := &http.Server{
-		Addr:    ":8083", // Change this to your desired port
+		Addr:    ":8083", //change this to your desired port
 		Handler: router,
 	}
 
-	gin.SetMode(gin.ReleaseMode)
+	//gin.SetMode(gin.ReleaseMode)
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -65,7 +71,7 @@ func gracefulShutdown(server *http.Server) {
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
 
-	fmt.Println("\nShutting down gracefully...")
+	fmt.Println("\nSHutting down gracefully...")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

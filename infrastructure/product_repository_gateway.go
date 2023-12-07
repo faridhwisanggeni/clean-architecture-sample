@@ -19,19 +19,19 @@ func NewProductRepository(dbConn *pgx.Conn) *ProductRepositoryImpl {
 }
 
 func (r *ProductRepositoryImpl) GetProducts() ([]*domain.Product, error) {
-	sql := "SELECT id, name, price FROM product"
+	sql := "SELECT id, name, price, quantity from product"
 
 	rows, err := r.dbConn.Query(context.Background(), sql)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching product: %w", err)
+		return nil, fmt.Errorf("Error fetching product: %w", err)
 	}
 	defer rows.Close()
 
 	var products []*domain.Product
 	for rows.Next() {
 		var p domain.Product
-		if err := rows.Scan(&p.ID, &p.Name, &p.Price); err != nil {
-			return nil, fmt.Errorf("error scanning product: %w", err)
+		if err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Quantity); err != nil {
+			return nil, fmt.Errorf("Error scanning product: %w", err)
 		}
 		products = append(products, &p)
 	}
@@ -40,56 +40,70 @@ func (r *ProductRepositoryImpl) GetProducts() ([]*domain.Product, error) {
 }
 
 func (r *ProductRepositoryImpl) GetProductByID(id string) (*domain.Product, error) {
-	sql := "SELECT id, name, price FROM product WHERE id = $1"
+	sql := "SELECT id, name, price, quantity from product where id = $1"
 
 	row := r.dbConn.QueryRow(context.Background(), sql, id)
 
 	var p domain.Product
-	if err := row.Scan(&p.ID, &p.Name, &p.Price); err != nil {
-		return nil, fmt.Errorf("error scanning product: %w", err)
+	if err := row.Scan(&p.ID, &p.Name, &p.Price, &p.Quantity); err != nil {
+		return nil, fmt.Errorf("Error scanning product: %w", err)
 	}
 
 	return &p, nil
 }
 
 func (r *ProductRepositoryImpl) CreateProduct(product *domain.Product) (*domain.Product, error) {
-	sql := "INSERT INTO product(name, price) VALUES($1, $2) RETURNING id, name, price"
+	sql := "INSERT INTO product(name, price, quantity) VALUES($1, $2, $3) RETURNING id, name, price, quantity"
 
-	row := r.dbConn.QueryRow(context.Background(), sql, product.Name, product.Price)
+	row := r.dbConn.QueryRow(context.Background(), sql, product.Name, product.Price, product.Quantity)
 
 	var createdProduct domain.Product
-	if err := row.Scan(&createdProduct.ID, &createdProduct.Name, &createdProduct.Price); err != nil {
-		return nil, fmt.Errorf("error creating product: %w", err)
+	if err := row.Scan(&createdProduct.ID, &createdProduct.Name, &createdProduct.Price, &createdProduct.Quantity); err != nil {
+		return nil, fmt.Errorf("Error creating product: %w", err)
 	}
 
 	return &createdProduct, nil
 }
 
-func (r *ProductRepositoryImpl) UpdateProduct(id string, name string, price float64) (*domain.Product, error) {
-	sql := "UPDATE product SET name=$2, price=$3 WHERE id=$1 RETURNING id, name, price"
-
-	row := r.dbConn.QueryRow(context.Background(), sql, id, name, price)
-
-	var updatedProduct domain.Product
-	if err := row.Scan(&updatedProduct.ID, &updatedProduct.Name, &updatedProduct.Price); err != nil {
-		return nil, fmt.Errorf("error updating product: %w", err)
+func (r *ProductRepositoryImpl) UpdateProduct(id string, name string, price float64, quantity int) (*domain.Product, error) {
+	//cek exist
+	var enough int
+	sqlcek := "select count(*) from product where id = $1"
+	r.dbConn.QueryRow(context.Background(), sqlcek, id).Scan(enough)
+	if enough < 1 {
+		return nil, fmt.Errorf("Error updating product: %s", "product not found")
 	}
 
+	sql := "UPDATE product set name=$2, price=$3, quantity=$4 where id=$1 returning id, name, price, quantity"
+
+	row := r.dbConn.QueryRow(context.Background(), sql, id, name, price, quantity)
+
+	var updatedProduct domain.Product
+	if err := row.Scan(&updatedProduct.ID, &updatedProduct.Name, &updatedProduct.Price, &updatedProduct.Quantity); err != nil {
+		return nil, fmt.Errorf("Error updating product: %w", err)
+	}
 	return &updatedProduct, nil
 }
 
 func (r *ProductRepositoryImpl) DeleteProduct(id string) error {
-	sql := "DELETE FROM product WHERE id = $1"
+	//cek exist
+	var enough int
+	sqlcek := "select count(*) from product where id = $1"
+	r.dbConn.QueryRow(context.Background(), sqlcek, id).Scan(enough)
+	if enough < 1 {
+		return fmt.Errorf("Error deleting product: %s", "product not found")
+	}
+
+	sql := "DELETE FROM product id = $1"
 
 	_, err := r.dbConn.Exec(context.Background(), sql, id)
 	if err != nil {
-		return fmt.Errorf("error deleting product: %w", err)
+		return fmt.Errorf("Error deleting product: %w", err)
 	}
-
 	return nil
 }
 
-func (r *ProductRepositoryImpl) GetProductsResponse(data []*domain.Product, err error) ([]*domain.Product, error) {
+func (r *ProductRepositoryImpl) GetProductResponse(data []*domain.Product, err error) ([]*domain.Product, error) {
 	return data, err
 }
 

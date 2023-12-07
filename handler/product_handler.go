@@ -18,9 +18,9 @@ func NewProductHandler(productUseCase usecase.ProductRepositoryInPort) *ProductH
 	}
 }
 
+// Controllers
 // Implement the CRUD handlers
-
-// GetProducts handles the request to get all products
+// GetProducts handle the request to get all products
 func (h *ProductHandler) GetProducts(c *gin.Context) {
 	products, err := h.productUseCase.GetProducts()
 	if err != nil {
@@ -32,22 +32,21 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 
 // GetProductByID handles the request to get a product by ID
 func (h *ProductHandler) GetProductByID(c *gin.Context) {
-	// id := strconv.Itoa(c.Param("id"))
+	// id :=strconv.Itoa(c.param("id"))
 	// if err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid product ID"})
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Product"})
 	// 	return
 	// }
 
 	product, err := h.productUseCase.GetProductByID(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
-		return
 	}
 
 	c.JSON(http.StatusOK, product)
 }
 
-// CreateProduct handles the request to create a new product
+// Create Product handle the request to create a new product
 func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	var product domain.Product
 	if err := c.ShouldBindJSON(&product); err != nil {
@@ -64,21 +63,19 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	c.JSON(http.StatusCreated, createdProduct)
 }
 
-// UpdateProduct handles the request to update a product
+// Update product handle the request to update a product
 func (h *ProductHandler) UpdateProduct(c *gin.Context) {
-
 	var updatedProduct domain.Product
 	if err := c.ShouldBindJSON(&updatedProduct); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	updateProduct, err := h.productUseCase.UpdateProduct(updatedProduct.ID, updatedProduct.Name, updatedProduct.Price)
+	updateProduct, err := h.productUseCase.UpdateProduct(c.Param("id"), updatedProduct.Name, updatedProduct.Price, updatedProduct.Quantity)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
 	c.JSON(http.StatusOK, updateProduct)
 }
 
@@ -87,7 +84,7 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 
 	err := h.productUseCase.DeleteProduct(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
