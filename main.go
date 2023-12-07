@@ -33,6 +33,12 @@ func main() {
 	productUseCase := usecase.NewProductUseCase(productRepositoryInPort, productRepositoryOutPort)
 	productHandler := handler.NewProductHandler(productUseCase)
 
+	transaksiRepository := infrastructur.NewTransaksiRepository(db)
+	transaksiRepositoryInPort := usecase.TransaksiRepositoryInPort(transaksiRepository)
+	transaksiRepositoryOutPort := usecase.TransaksiRepositoryOutPort(transaksiRepository)
+	transaksiUseCase := usecase.NewTransaksiUseCase(transaksiRepositoryInPort, transaksiRepositoryOutPort)
+	transaksitHandler := handler.NewTransaksitHandler(transaksiUseCase)
+
 	// Set up HTTP server
 	router := gin.Default()
 	api := router.Group("/api")
@@ -42,6 +48,7 @@ func main() {
 		api.POST("/products", productHandler.CreateProduct)
 		api.PUT("/products/:id", productHandler.UpdateProduct)
 		api.DELETE("/products/:id", productHandler.DeleteProduct)
+		api.POST("/transaksi", transaksitHandler.CreateTransaksi)
 	}
 
 	server := &http.Server{
