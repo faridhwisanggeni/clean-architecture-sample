@@ -17,7 +17,6 @@ import (
 )
 
 func main() {
-	// dsn := "user=g2dev01 password=g2dev01password dbname=g2_database sslmode=disable"
 	dbConfig := "postgresql://g2dev01:g2dev01password@localhost:54320/g2_database"
 	db, err := pgx.Connect(context.Background(), dbConfig)
 	if err != nil {
@@ -49,7 +48,7 @@ func main() {
 		Handler: router,
 	}
 
-	gin.SetMode(gin.ReleaseMode)
+	//gin.SetMode(gin.ReleaseMode)
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {

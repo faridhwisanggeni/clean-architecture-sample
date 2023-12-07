@@ -31,6 +31,10 @@ func (uc *ProductUseCaseInteractor) CreateProduct(product *domain.Product) (*dom
 		var product = &domain.Product{}
 		return uc.productRepositoryOut.CreateProductResponse(product, fmt.Errorf("Nilai price kemahalan"))
 	}
+	if product.Quantity > 10 {
+		var product = &domain.Product{}
+		return uc.productRepositoryOut.CreateProductResponse(product, fmt.Errorf("Quantity kebanyakan, mobilnya gak muat"))
+	}
 	return uc.productRepositoryOut.CreateProductResponse(uc.productRepositoryIn.CreateProduct(product))
 }
 
@@ -50,7 +54,7 @@ func (uc *ProductUseCaseInteractor) GetProductByIDResponse(id string) (*domain.P
 	return uc.productRepositoryOut.GetProductByIDResponse(uc.productRepositoryIn.GetProductByID(id))
 }
 
-func (uc *ProductUseCaseInteractor) CreateProductResponse(product *domain.Product) (*domain.Product, error) {
+func (uc *ProductUseCaseInteractor) CreateProductResponse(product *domain.Product, err error) (*domain.Product, error) {
 	return uc.productRepositoryOut.CreateProductResponse(uc.productRepositoryIn.CreateProduct(product))
 }
 

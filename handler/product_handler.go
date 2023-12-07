@@ -18,11 +18,11 @@ func NewProductHandler(productUseCase usecase.ProductRepositoryInPort) *ProductH
 	}
 }
 
+// Controllers
 // Implement the CRUD handlers
-
 // GetProducts handles the request to get all products
 func (h *ProductHandler) GetProducts(c *gin.Context) {
-	products, err := h.productUseCase.GetProducts()
+	products, err := h.productUseCase.GetProducts() //product is presenters from outport
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
